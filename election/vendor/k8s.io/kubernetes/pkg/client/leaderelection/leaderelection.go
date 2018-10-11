@@ -246,7 +246,20 @@ func (le *LeaderElector) tryAcquireOrRenew() bool {
 		RenewTime:            now,
 		AcquireTime:          now,
 	}
-
+	subset := []api.EndpointSubset{
+		api.EndpointSubset{
+			Addresses: []api.EndpointAddress{
+				api.EndpointAddress{
+					IP: leaderElectionRecord.HolderIdentity,
+				},
+			},
+			Ports: []api.EndpointPort{
+				api.EndpointPort{
+					Port: 80,
+				},
+			},
+		},
+	}
 	e, err := le.config.Client.Endpoints(le.config.EndpointsMeta.Namespace).Get(le.config.EndpointsMeta.Name)
 	if err != nil {
 		if !errors.IsNotFound(err) {
@@ -266,6 +279,7 @@ func (le *LeaderElector) tryAcquireOrRenew() bool {
 					LeaderElectionRecordAnnotationKey: string(leaderElectionRecordBytes),
 				},
 			},
+			Subsets: subset,
 		})
 		if err != nil {
 			glog.Errorf("error initially creating endpoints: %v", err)
@@ -312,7 +326,7 @@ func (le *LeaderElector) tryAcquireOrRenew() bool {
 		return false
 	}
 	e.Annotations[LeaderElectionRecordAnnotationKey] = string(leaderElectionRecordBytes)
-
+	e.Subsets = subset
 	_, err = le.config.Client.Endpoints(le.config.EndpointsMeta.Namespace).Update(e)
 	if err != nil {
 		glog.Errorf("err: %v", err)

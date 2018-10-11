@@ -13,4 +13,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-/server --id=$(hostname) $@
+/server --id="$POD_IP" $@

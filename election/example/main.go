@@ -37,8 +37,11 @@ var (
 	flags = flag.NewFlagSet(
 		`elector --election=<name>`,
 		flag.ExitOnError)
-	name      = flags.String("election", "", "The name of the election")
-	id        = flags.String("id", "", "The id of this participant")
+	name = flags.String("election", "", "The name of the election")
+	id   = flags.String("id", "", "The id of this participant")
+	// ip and port are required to update the endpoint with address of current leader.
+	ip        = flags.String("ip", "", "ip addr of participant")
+	port      = flags.Int32("port", 5432, "listening port of the participant")
 	namespace = flags.String("election-namespace", api.NamespaceDefault, "The Kubernetes namespace for this election")
 	ttl       = flags.Duration("ttl", 10*time.Second, "The TTL for this election")
 	inCluster = flags.Bool("use-cluster-credentials", false, "Should this request use cluster credentials?")
@@ -87,6 +90,12 @@ func validateFlags() {
 	if len(*name) == 0 {
 		glog.Fatal("--election cannot be empty")
 	}
+	if len(*ip) == 0 {
+		glog.Fatal("No ip address specified")
+	}
+	if *port == 0 {
+		glog.Warning("No port specified default is 5432")
+	}
 }
 
 func main() {
@@ -103,7 +112,7 @@ func main() {
 		fmt.Printf("%s is the leader\n", leader.Name)
 	}
 
-	e, err := election.NewElection(*name, *id, *namespace, *ttl, fn, kubeClient)
+	e, err := election.NewElection(*name, *id, *ip, *port, *namespace, *ttl, fn, kubeClient)
 	if err != nil {
 		glog.Fatalf("failed to create election: %v", err)
 	}

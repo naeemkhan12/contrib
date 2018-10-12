@@ -102,6 +102,10 @@ type LeaderElectionConfig struct {
 	EndpointsMeta api.ObjectMeta
 	// Identity is a unique identifier of the leader elector.
 	Identity string
+	// ip address and port of the leader to update the endpoint with the address of current
+	// leader
+	IP   string
+	Port int32
 
 	Client        client.Interface
 	EventRecorder record.EventRecorder
@@ -250,12 +254,12 @@ func (le *LeaderElector) tryAcquireOrRenew() bool {
 		api.EndpointSubset{
 			Addresses: []api.EndpointAddress{
 				api.EndpointAddress{
-					IP: leaderElectionRecord.HolderIdentity,
+					IP: le.config.IP,
 				},
 			},
 			Ports: []api.EndpointPort{
 				api.EndpointPort{
-					Port: 80,
+					Port: le.config.Port,
 				},
 			},
 		},
